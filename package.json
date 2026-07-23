@@ -14,9 +14,14 @@
   "scripts": {
     "quartz": "./quartz/bootstrap-cli.mjs",
     "docs": "npx quartz build --serve -d docs",
-    "check": "tsc --noEmit && npx prettier . --check",
+    "check": "tsc --noEmit && npm run english:typecheck && npx prettier . --check",
     "format": "npx prettier . --write",
     "test": "tsx --test",
+    "english:validate": "tsx scripts/english/validate.ts",
+    "english:revision": "tsx scripts/english/generate-revision.ts",
+    "english:next-id": "tsx scripts/english/next-id.ts",
+    "english:test": "tsx --test scripts/english/test/*.test.ts",
+    "english:typecheck": "tsc -p scripts/english/tsconfig.json --noEmit",
     "profile": "0x -D prof ./quartz/bootstrap-cli.mjs build --concurrency=1",
     "install-plugins": "npx tsx ./quartz/plugins/loader/install-plugins.ts",
     "prebuild": "npm run install-plugins"

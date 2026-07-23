@@ -1,0 +1,4 @@
+interface:
+  display_name: "Generate English Revision"
+  short_description: "Create deterministic daily English revision pages"
+  default_prompt: "Use $generate-english-revision to generate today's English revision."

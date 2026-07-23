@@ -1,0 +1,4 @@
+interface:
+  display_name: "Process English"
+  short_description: "Turn inbox captures into confirmed daily notes"
+  default_prompt: "Use $process-english to discuss and save my English inbox."

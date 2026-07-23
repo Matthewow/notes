@@ -1,0 +1,4 @@
+interface:
+  display_name: "Weekly English Review"
+  short_description: "Review and synthesize a week of English notes"
+  default_prompt: "Use $weekly-english-review to review this week's English notes."

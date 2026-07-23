@@ -1,0 +1,24 @@
+version: 1
+
+timezone: America/Toronto
+
+paths:
+  inbox: content/english/inbox/current.md
+  daily: content/english/daily
+  weekly: content/english/weekly
+  revision: content/english/revision
+
+review:
+  intervals_days:
+    - 1
+    - 3
+    - 7
+    - 14
+    - 30
+    - 60
+    - 120
+  target_min_items: 8
+  target_max_items: 15
+  supplemental_review:
+    enabled: true
+    minimum_age_days: 14
