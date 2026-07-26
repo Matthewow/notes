@@ -1,6 +1,6 @@
 ---
 name: process-english
-description: Process the complete Quartz English inbox through interactive explanation, transcript correction, normalization, and user confirmation, then save concise canonical daily Markdown. Use for requests such as "process today's English", "process my English inbox", "let's go through today's expressions", or later edits to existing canonical English items. Do not use for weekly synthesis or deterministic revision generation.
+description: Process the complete Quartz English inbox using A/L/S intent labels, personalized transcript extraction, interactive explanation, normalization, and user confirmation, then save concise canonical daily Markdown. Use for requests such as "process today's English", "process my English inbox", "scan this transcript for English", "let's go through today's expressions", or later edits to existing canonical English items. Do not use for weekly synthesis or deterministic revision generation.
 ---
 
 # Process English
@@ -11,28 +11,46 @@ Work from the Quartz repository root. Treat
 
 ## Workflow
 
-1. Read `.codex/english-learning/config.yaml`, the complete inbox, and
-   relevant daily notes.
+1. Read `.codex/english-learning/config.yaml`, the complete inbox, and recent
+   or relevant daily and weekly notes. Use retained notes and user feedback
+   from the current conversation to estimate the user's language level.
 2. If the inbox has no captured entries, report that and stop.
-3. Identify candidates:
+3. Interpret optional intent labels, case-insensitively:
+   - `A:`: the user understands the expression and wants it in active
+     vocabulary;
+   - `L:`: the user wants normal learning and explanation;
+   - `S:`: scan the supplied transcript and extract useful expressions.
+     Accept labels inline, such as `- A: ...`, or as grouped headings `## A`,
+     `## L`, and `## S`. Treat unlabeled content as `L`.
+4. Identify candidates:
    - prefer bold Markdown as the target;
    - otherwise inspect the full sentence;
    - accept expression-only bullets;
    - associate indented context with its top-level bullet.
-4. Discuss every candidate before editing files:
+5. For an `S` transcript:
+   - correct likely transcription errors before judging expressions;
+   - select natural, reusable expressions with practical learning value;
+   - estimate unfamiliarity from retained notes, current feedback, and the
+     language level shown in the transcript;
+   - use no minimum, maximum, or target count;
+   - return every strong candidate, even when the list is long, but do not
+     pad the list with weak, basic, highly specific, or uncertain fragments.
+6. Discuss every candidate before editing files:
    - identify the likely natural expression;
    - explain its contextual meaning;
    - call out likely transcript corrections;
    - distinguish important alternatives;
    - normalize it to a reusable canonical form.
-5. State uncertainty:
+     For `A` items, keep the explanation short and avoid basic grammar or
+     vocabulary explanation unless it prevents a likely usage mistake.
+7. State uncertainty:
    - high confidence: explain an obvious normalization;
    - medium confidence: give the likely interpretation and reason;
    - low confidence: resolve it with the user before proposing final content.
-6. Check all canonical daily notes for identical or semantically equivalent
-   items. Propose reuse, correction, or merging instead of silently adding a
-   duplicate.
-7. Present one complete proposal for the entire inbox. Do not modify files
+8. Treat each selected item as a new learning occurrence. Keep repeated or
+   semantically equivalent expressions, including repeats in the same batch.
+   Do not warn about, merge, or remove them.
+9. Present one complete proposal for the entire inbox. Do not modify files
    yet.
 
 ## Canonical proposal
@@ -42,6 +60,10 @@ another language. Use one to three natural examples. Make each example a
 complete, slightly longer sentence with enough context to clarify how the
 expression is used. Prefer software, workplace, meeting, or everyday contexts
 when useful.
+
+For an `A` item whose source context is short, make at least one example
+longer and context-rich. The compact explanation can stay short; the richer
+example supplies the learning context.
 
 ```markdown
 ### get a read on
@@ -99,7 +121,8 @@ inbox and canonical files unchanged so the conversation can resume later.
    ```
 
 6. Preserve an existing ID when editing its heading, meaning, examples, or
-   note.
+   note. A stable ID identifies one learning occurrence, not unique
+   expression text. Always allocate another ID for a repeated expression.
 7. Apply the complete confirmed daily change, but do not clear the inbox yet.
 8. Run `npm run english:validate`.
 9. If validation fails, restore the daily file to its prior content, keep the

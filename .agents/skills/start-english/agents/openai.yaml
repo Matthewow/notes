@@ -1,0 +1,4 @@
+interface:
+  display_name: "English Learning Menu"
+  short_description: "Choose an English learning workflow with one number"
+  default_prompt: "Use $start-english to show my English learning menu."

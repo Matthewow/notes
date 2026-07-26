@@ -111,10 +111,14 @@ quartz/
 │           └── yesterday.md
 │
 ├── .codex/
-│   ├── english-learning/
-│   │   └── config.yaml
-│   │
+│   └── english-learning/
+│       └── config.yaml
+│
+├── .agents/
 │   └── skills/
+│       ├── start-english/
+│       │   └── SKILL.md
+│       │
 │       ├── process-english/
 │       │   └── SKILL.md
 │       │
@@ -134,7 +138,7 @@ quartz/
             └── types.ts
 ```
 
-The exact skill directory may be adjusted to match the current Codex skill convention.
+Repository skills use the current `.agents/skills` Codex convention.
 
 The logical structure should remain equivalent.
 
@@ -197,7 +201,7 @@ content/english/daily/*.md
 
 Each daily file contains zero or more learning items.
 
-Each learning item must have:
+Each learning occurrence must have:
 
 * a stable item ID;
 * a canonical expression;
@@ -212,12 +216,13 @@ It may optionally have:
 
 # 6. Stable Item IDs
 
-The revision generator needs a stable way to identify individual expressions.
+The revision generator needs a stable way to identify individual learning
+occurrences.
 
 Using only the heading text is not sufficient because:
 
 * headings may later be improved;
-* the same expression may accidentally appear twice;
+* the same expression may intentionally be learned more than once;
 * normalization may change the canonical wording.
 
 The design should therefore assign each item a hidden stable ID.
@@ -268,6 +273,10 @@ If a collision occurs:
 Once created, an item ID must not change automatically.
 
 This remains true even if the expression heading is later edited.
+
+The ID identifies the occurrence, not unique expression text. Two items with
+the same expression must have different IDs and may be scheduled
+independently.
 
 ---
 
@@ -369,14 +378,14 @@ Example:
 ```markdown
 # Current English Inbox
 
-- I don't want us to **paint ourselves into a corner** here.
+- A: We should "double click" the issue before we commit.
 
-- We should "double click" the issue before we commit.
+- L: I don't want us to **paint ourselves into a corner** here.
 
-- **get a read on**
+- L: **get a read on**
 
-- blast radius
-  context: We were talking about the impact of changing a payment API.
+- S:
+  [a longer transcript to scan]
 ```
 
 No formal schema should be required.
@@ -384,6 +393,15 @@ No formal schema should be required.
 The user should be able to capture ideas quickly without thinking about formatting rules.
 
 The agent is responsible for interpreting the inbox.
+
+The optional labels are:
+
+* `A:` for an understood expression that should become active vocabulary;
+* `L:` for an expression that needs normal learning and explanation;
+* `S:` for a transcript that should be scanned for useful expressions.
+
+Grouped `## A`, `## L`, and `## S` sections are also accepted. Unlabeled
+content defaults to `L`.
 
 ---
 
@@ -440,10 +458,11 @@ Identify candidate learning items.
 
 Rules:
 
-1. bold text is the default target when available;
-2. otherwise inspect the full sentence;
-3. expression-only bullets are accepted;
-4. supporting context should be associated with the nearest item.
+1. interpret an inline or grouped `A`, `L`, or `S` label first;
+2. bold text is the default target when available;
+3. otherwise inspect the full sentence;
+4. expression-only bullets are accepted;
+5. supporting context should be associated with the nearest item.
 
 ---
 
@@ -460,6 +479,12 @@ For each candidate:
 This stage may be detailed.
 
 No files should be modified.
+
+For an `S` transcript, extract any number of expressions supported by quality,
+practical value, and estimated user familiarity. Do not apply a numeric quota.
+Estimate familiarity from retained canonical items, current user feedback, and
+the language level demonstrated by the transcript. This is intentionally a
+tunable LLM judgment.
 
 ---
 
@@ -478,6 +503,10 @@ The discussion may include:
 The goal is understanding, not creating documentation.
 
 The agent should avoid unnecessary explanation once the user clearly understands the item.
+
+For an `A` item, keep the meaning and explanation short. If the source context
+is too short, create at least one longer, realistic example that makes the
+usage clear and easier to reuse.
 
 ---
 
@@ -579,15 +608,10 @@ content/english/daily/YYYY-MM-DD.md
 
 already exists, new confirmed items should be appended.
 
-The skill should first check for obvious duplicates.
-
-Possible duplicate signals include:
-
-* identical canonical expressions;
-* normalized forms that are effectively equivalent;
-* semantically identical items already captured recently.
-
-The agent should propose merging rather than silently duplicating.
+Repeated expressions are valid independent learning occurrences. Append them
+with new unique IDs without duplicate warnings or merge suggestions. This
+applies to repeated expressions within one processing batch and across
+different daily files.
 
 ---
 
@@ -695,7 +719,7 @@ Look for:
 * overlapping meanings;
 * useful contrasts;
 * repeated themes;
-* duplicated entries;
+* repeated expressions that may show an active-vocabulary need;
 * potentially incorrect entries;
 * expressions particularly useful for active vocabulary.
 
@@ -734,7 +758,6 @@ Examples:
 * better canonical wording;
 * corrected meanings;
 * stronger examples;
-* duplicate consolidation;
 * useful short notes.
 
 These proposals must not be silently applied.
@@ -978,8 +1001,7 @@ select additional older items.
 Supplemental candidates should:
 
 * be at least `minimum_age_days` old;
-* not already be scheduled today;
-* preferably not have appeared in yesterday's revision.
+* not already be scheduled today.
 
 Supplemental selection should be deterministic for a given date.
 
@@ -1159,15 +1181,14 @@ The system does not attempt to create all missing historical revision files.
 
 ---
 
-# 26. Yesterday Exclusion for Supplemental Review
+# 26. Repetition in Revision Selection
 
-When selecting supplemental items, the generator should preferably exclude items already present in `yesterday.md`.
+Do not exclude an item because the same expression, or the same occurrence,
+appeared in `yesterday.md`. Repetition is an intended part of learning.
 
-This reduces unnecessary immediate repetition.
-
-This exclusion does not apply to genuinely scheduled items.
-
-A scheduled item should always appear even if it was also selected as supplemental yesterday.
+Each occurrence is selected independently by its stable item ID. If two
+selected occurrences have identical expression text, both should remain in
+the same generated revision page.
 
 ---
 
@@ -1225,7 +1246,6 @@ Validation should check:
 
 Validation warnings may include:
 
-* duplicate canonical expressions;
 * unusually long meanings;
 * unusually long notes.
 
@@ -1398,6 +1418,23 @@ Must not:
 
 ---
 
+## `start-english`
+
+Must:
+
+* trigger when the user sends `English` or asks for the English menu;
+* inspect the inbox, today's revision date, and current ISO week;
+* show numbered choices for inbox processing, revision generation, and weekly
+  review;
+* wait for a numeric reply and then follow the selected skill.
+
+Must not:
+
+* perform a workflow before the user selects it;
+* replace the direct triggers of the three workflow skills.
+
+---
+
 # 33. Suggested Commands
 
 The implementation may eventually expose convenient commands such as:
@@ -1514,7 +1551,19 @@ The skill should invoke the deterministic generator rather than reimplement revi
 
 ---
 
-## Phase 7 — Real usage
+## Phase 7 — Interactive entry menu
+
+Implement:
+
+```text
+start-english/SKILL.md
+```
+
+Test status display and routing for replies `1`, `2`, and `3`.
+
+---
+
+## Phase 8 — Real usage
 
 Use the system for several weeks before adding complexity.
 

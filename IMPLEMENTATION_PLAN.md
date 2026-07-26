@@ -79,14 +79,14 @@ unfinished, leave the conversation and inbox in place and resume later. Write
 the daily note and clear the inbox only after all current items are understood
 and the user confirms the complete proposal.
 
-### D5 — Supplemental exclusion of yesterday's items
+### D5 — Repetition across revision days
 
-**Issue:** Revision output must not contain hidden item IDs, but reliable
-identity matching against `yesterday.md` would require IDs or separate state.
+**Issue:** The original design lowered the priority of expressions that
+appeared yesterday.
 
-**Decision:** Use normalized expression text for a best-effort exclusion. Do
-not add state or expose IDs in revision files. Scheduled items still take
-priority and may repeat.
+**Decision:** Do not exclude or lower the priority of items based on
+`yesterday.md`. Repetition is useful. Every learning occurrence is selected
+independently by stable item ID.
 
 ### D6 — Empty revision day
 
@@ -158,6 +158,8 @@ The final layout should be:
 quartz/
 ├── .agents/
 │   └── skills/
+│       ├── start-english/
+│       │   └── SKILL.md
 │       ├── process-english/
 │       │   └── SKILL.md
 │       ├── weekly-english-review/
@@ -386,7 +388,6 @@ quartz/
    - malformed frontmatter;
    - malformed revision files.
 3. Report warnings for:
-   - normalized duplicate expressions;
    - unusually long meanings or notes;
    - an item ID date prefix different from its source filename.
 4. Use exit code `0` for success with or without warnings and `1` for errors.
@@ -415,16 +416,14 @@ quartz/
 3. If scheduled count is below the target minimum, build supplemental
    candidates that:
    - meet the minimum age;
-   - are not already scheduled;
-   - preferably did not appear yesterday.
-4. Apply D5 matching for yesterday.
-5. Rank supplemental candidates with a stable hash of
+   - are not already scheduled.
+4. Rank supplemental candidates with a stable hash of
    `revisionDate + itemId`.
-6. Add supplements only until `target_min_items` is reached or candidates are
+5. Add supplements only until `target_min_items` is reached or candidates are
    exhausted.
-7. Sort scheduled items by capture date and item ID. Append supplemental
+6. Sort scheduled items by capture date and item ID. Append supplemental
    items in deterministic hash order.
-8. Include all scheduled items even when their count is above the target
+7. Include all scheduled items even when their count is above the target
    maximum. Treat the maximum as a warning threshold, not a cap.
 
 **Acceptance criteria:**
@@ -432,7 +431,8 @@ quartz/
 - The schedule example in `DESIGN.MD` passes exactly.
 - Repeated runs for the same date return the same IDs and order.
 - Different dates rotate supplemental candidates.
-- Yesterday exclusion never removes a genuinely scheduled item.
+- Yesterday's revision does not affect selection.
+- Repeated expressions with different IDs remain independent selections.
 - Fewer than eight available items produces a smaller valid result.
 - More than fifteen scheduled items retains every scheduled item.
 
@@ -550,7 +550,8 @@ quartz/
    - high, medium, and low transcript confidence.
 5. Apply D2 to meanings and generate one to three useful examples.
 6. Apply D8 when original context has lasting learning value.
-7. Check existing canonical notes for duplicates before proposing a new item.
+7. Treat repeated expressions as independent learning occurrences and assign
+   each one a new ID.
 8. After confirmation:
    - allocate IDs with `next-id.ts`;
    - create or append to the correct daily file;
@@ -571,7 +572,7 @@ quartz/
   proposal without asking for ritual approval again.
 - A request for explanation or a changed example does not count as approval.
 - Multiple sessions append safely to one date file.
-- An obvious duplicate is proposed as a merge, not silently added.
+- A repeated expression is added without a duplicate warning or merge.
 - A failed validation leaves raw input available.
 - Manual scenarios in section 7 pass.
 
@@ -707,7 +708,7 @@ these manual scenarios before declaring the skills complete.
 | P7  | User asks for more explanation             | No canonical file is written                                          |
 | P8  | User clearly approves final proposal       | Skill persists without asking for duplicate approval                  |
 | P9  | One item remains unfinished                | No batch is persisted or cleared; the session can resume later        |
-| P10 | Duplicate expression already exists        | Skill proposes reuse, edit, or merge                                  |
+| P10 | Duplicate expression already exists        | Skill keeps it as a new occurrence with a unique ID                    |
 | P11 | Validation fails after a proposed write    | Inbox remains available and partial canonical changes are rolled back |
 | W1  | Current week has several daily files       | Review covers Monday through Sunday files that exist                  |
 | W2  | Current week has no daily files            | No weekly note is created by default                                  |
@@ -718,18 +719,16 @@ these manual scenarios before declaring the skills complete.
 
 ## 8. Known Limits Accepted for Version 1
 
-1. Supplemental yesterday exclusion can be imperfect after a canonical
-   expression heading is edited because revision files do not carry IDs.
-2. Meaning quality, transcript correction, duplicate semantics, and weekly
+1. Meaning quality, transcript correction, familiarity estimation, and weekly
    synthesis need human review. Deterministic validation cannot prove them.
-3. Multi-file persistence is protected with validation, temporary files, and
+2. Multi-file persistence is protected with validation, temporary files, and
    rollback, but is not a database-grade transaction across a machine crash.
-4. Scheduled load is not capped. A high-volume capture day can cause a later
+3. Scheduled load is not capped. A high-volume capture day can cause a later
    revision to contain more than fifteen items.
-5. The workflow does not know whether a revision was actually completed.
-6. Processing an old inbox defaults to today's Toronto date unless the user
+4. The workflow does not know whether a revision was actually completed.
+5. Processing an old inbox defaults to today's Toronto date unless the user
    supplies the intended capture date.
-7. All selected inbox and canonical text can be public. Manual content
+6. All selected inbox and canonical text can be public. Manual content
    selection remains the privacy control.
 
 ## 9. Definition of Done
@@ -738,7 +737,7 @@ Version 1 is complete when:
 
 - ENG-001 through ENG-014 are accepted;
 - all automated checks and manual scenarios pass;
-- the three skills are discoverable from the repository root;
+- the four skills are discoverable from the repository root;
 - inbox content follows the accepted manual-selection privacy policy;
 - canonical notes are only written after confirmation;
 - revision generation is deterministic, idempotent, and safe to rerun;
@@ -756,29 +755,49 @@ Fill this section during ENG-001.
 | D2 Meaning language         | Simplified Chinese by default                       | 2026-07-22 |
 | D3 Page title format        | Frontmatter title; omit Markdown H1                 | 2026-07-22 |
 | D4 Partial inbox processing | Complete-batch processing                           | 2026-07-22 |
-| D5 Yesterday matching       | Normalized expression; best effort                  | 2026-07-22 |
+| D5 Revision repetition      | No yesterday exclusion; IDs select occurrences      | 2026-07-26 |
 | D6 Empty revision day       | Generate a dated empty-state page                   | 2026-07-22 |
 | D7 Multi-file atomicity     | Validated temporary files with best-effort rollback | 2026-07-22 |
 | D8 Original context         | Reuse as example or summarize in optional note      | 2026-07-22 |
 
-## 11. Implementation Status — 2026-07-22
+## 11. Usage-driven improvements — 2026-07-26
+
+The first real usage period produced these accepted changes:
+
+1. Support `A`, `L`, and `S` inbox labels inline or as grouped headings.
+   Unlabeled content defaults to `L`.
+2. Keep explanations short for `A` items, while adding a longer,
+   context-rich example when the source sentence is too short.
+3. Treat stable IDs as learning-occurrence IDs. Repeated expression text is
+   valid and receives another unique ID.
+4. Allow repeated expressions everywhere, including twice on one generated
+   revision page. Remove duplicate warnings and merge suggestions.
+5. Remove yesterday-expression exclusion from supplemental selection.
+6. Extract transcript expressions without a numeric cap. Use quality,
+   usefulness, and a personalized familiarity estimate based on retained
+   notes and user feedback.
+7. Add a `start-english` skill. The user can type `English`, inspect a short
+   status menu, and reply `1`, `2`, or `3`.
+
+## 12. Implementation Status — 2026-07-26
 
 - ENG-001: Complete.
 - ENG-002 through ENG-013: Implemented and verified.
-- ENG-014: Pending the first real inbox and weekly-review pilot.
+- ENG-014: In progress through real daily usage.
+- The usage-driven improvements in section 11 are implemented.
 
 Verification completed:
 
 - `npm run english:typecheck` passed.
-- `npm run english:test` passed 31 tests.
-- `npm test` passed all 140 repository tests.
+- `npm run english:test` passed all 32 English tests.
+- `npm test` passed all 141 repository tests.
 - `npm run english:validate` passed with zero errors and warnings.
 - Stable-ID and revision CLIs passed smoke tests.
-- All three installed skills passed `quick_validate.py`.
+- All four installed skills passed `quick_validate.py`.
 - The Quartz production build completed and rendered the English landing,
   inbox, today, and yesterday pages with one visible H1 each.
 
 `npm run check` completed both TypeScript stages, but its repository-wide
-Prettier stage still reports the pre-existing files `content/index.md`,
-`REQUIREMENTS.MD`, and `DESIGN.MD`. All files created or modified by the
-English implementation pass a targeted Prettier check.
+Prettier stage still reports pre-existing document formatting. All TypeScript
+and skill files created or modified by the English implementation pass a
+targeted Prettier check.

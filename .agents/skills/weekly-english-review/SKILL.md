@@ -27,8 +27,9 @@ Guide the discussion in manageable stages:
 3. compare useful distinctions and usage limits;
 4. identify expressions worth actively using;
 5. identify items that need more review;
-6. flag inaccurate meanings, unnatural examples, duplicates, or better
-   canonical forms.
+6. flag inaccurate meanings, unnatural examples, or better canonical forms;
+7. treat repeated expressions as evidence of useful repetition or an
+   active-vocabulary need, not as duplicate data to consolidate.
 
 Do not immediately dump a long analysis. Expand only where semantic
 explanation helps learning.
@@ -42,6 +43,9 @@ Keep two proposal groups separate:
 
 For every daily edit, show the current and proposed versions. Never change its
 `english-item-id`.
+
+Each ID identifies a learning occurrence. Do not merge or remove items only
+because their expression text or meaning repeats another item.
 
 The weekly note belongs at
 `content/english/weekly/YYYY-Www.md`. Use frontmatter and no Markdown H1:

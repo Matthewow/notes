@@ -33,7 +33,3 @@ export function nextItemId(
   }
   return `${base}-${suffix}`
 }
-
-export function normalizeExpression(expression: string): string {
-  return expression.normalize("NFKC").trim().toLowerCase().replace(/\s+/g, " ")
-}

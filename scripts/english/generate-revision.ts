@@ -69,14 +69,8 @@ export async function generateRevision(
     )
   }
   const rotated = dateDelta > 0
-  const effectiveYesterday = rotated ? currentToday : currentYesterday
   const allItems = validation.notes.flatMap((note) => note.items)
-  const selection = selectReviewItems(
-    allItems,
-    options.revisionDate,
-    options.config,
-    effectiveYesterday.items.map((item) => item.expression),
-  )
+  const selection = selectReviewItems(allItems, options.revisionDate, options.config)
   const selectedItems = [...selection.scheduled, ...selection.supplemental]
   const todayContent = renderRevision(options.revisionDate, selectedItems, "today")
   validateCandidate(todayPath, todayContent)

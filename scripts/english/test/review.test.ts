@@ -72,16 +72,27 @@ describe("deterministic review selection", () => {
     )
   })
 
-  test("places yesterday's supplemental expression after fresh candidates", () => {
+  test("keeps repeated expressions as independent supplemental occurrences", () => {
     const items = [
-      item("2026-06-01-a", "2026-06-01", "repeat me"),
-      item("2026-06-01-b", "2026-06-01", "fresh one"),
-      item("2026-06-01-c", "2026-06-01", "fresh two"),
+      item("2026-06-01-repeat", "2026-06-01", "repeat me"),
+      item("2026-06-02-repeat", "2026-06-02", "repeat me"),
     ]
-    const result = selectReviewItems(items, "2026-07-22", config(2), [" Repeat   Me "])
-    assert.equal(
-      result.supplemental.some(({ expression }) => expression === "repeat me"),
-      false,
+    const result = selectReviewItems(items, "2026-07-22", config(2))
+    assert.deepEqual(
+      result.supplemental.map(({ id }) => id).toSorted(),
+      items.map(({ id }) => id).toSorted(),
+    )
+  })
+
+  test("keeps repeated expressions as independent scheduled occurrences", () => {
+    const items = [
+      item("2026-07-21-repeat", "2026-07-21", "repeat me"),
+      item("2026-07-21-repeat-2", "2026-07-21", "repeat me"),
+    ]
+    const result = selectReviewItems(items, "2026-07-22", config(1))
+    assert.deepEqual(
+      result.scheduled.map(({ id }) => id),
+      items.map(({ id }) => id),
     )
   })
 

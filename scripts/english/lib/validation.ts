@@ -1,7 +1,7 @@
 import path from "node:path"
 import { errorDiagnostic, warningDiagnostic } from "./diagnostics"
 import { isISODate } from "./date"
-import { isStructurallyValidItemId, normalizeExpression } from "./ids"
+import { isStructurallyValidItemId } from "./ids"
 import { readDailyNotes, readRevisionNote } from "./parser"
 import type { Diagnostic, LoadedEnglishConfig, RevisionNote, ValidationResult } from "./types"
 
@@ -64,7 +64,6 @@ export async function validateEnglishRepository(
   const daily = await readDailyNotes(config.absolutePaths.daily)
   const diagnostics = [...daily.diagnostics]
   const seenIds = new Map<string, { file: string; line: number }>()
-  const seenExpressions = new Map<string, { expression: string; file: string; line: number }>()
 
   for (const note of daily.notes) {
     if (note.title === undefined || note.title.trim() === "") {
@@ -162,25 +161,6 @@ export async function validateEnglishRepository(
             item.line,
           ),
         )
-      }
-
-      const normalized = normalizeExpression(item.expression)
-      const existingExpression = seenExpressions.get(normalized)
-      if (existingExpression !== undefined) {
-        diagnostics.push(
-          warningDiagnostic(
-            "DUPLICATE_EXPRESSION",
-            `Expression matches "${existingExpression.expression}" at ${existingExpression.file}:${existingExpression.line}`,
-            item.sourceFile,
-            item.line,
-          ),
-        )
-      } else if (normalized !== "") {
-        seenExpressions.set(normalized, {
-          expression: item.expression,
-          file: item.sourceFile,
-          line: item.line,
-        })
       }
     }
   }

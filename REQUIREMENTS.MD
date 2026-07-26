@@ -156,7 +156,12 @@ quartz/
 │           └── yesterday.md
 │
 ├── .codex/
+│   └── english-learning/
+│       └── config.yaml
+│
+├── .agents/
 │   └── skills/
+│       ├── start-english/
 │       ├── process-english/
 │       ├── weekly-english-review/
 │       └── generate-english-revision/
@@ -165,7 +170,7 @@ quartz/
     └── ...
 ```
 
-The exact location of Codex skills may be adjusted based on Codex conventions, but the logical separation should remain.
+Repository skills use the current `.agents/skills` Codex convention.
 
 ---
 
@@ -223,11 +228,21 @@ The input format should remain intentionally flexible.
 Example:
 
 ```markdown
-- I don't want us to **paint ourselves into a corner** here.
-- We should probably **double click on** this issue.
-- **get a read on**
-- There may be some blast radius here.
+- A: We should probably **double click on** this issue.
+- L: I don't want us to **paint ourselves into a corner** here.
+- L: **get a read on**
+- S: [a longer transcript to scan]
 ```
+
+The optional labels have these meanings:
+
+* `A:` — the user understands the expression but wants it in active
+  vocabulary;
+* `L:` — the user wants to learn the meaning or usage;
+* `S:` — scan a transcript and extract useful expressions.
+
+The same labels may be used as grouped headings such as `## A`, `## L`, and
+`## S`. An unlabeled entry defaults to `L`.
 
 ---
 
@@ -265,6 +280,17 @@ The agent may identify the likely useful expression.
 
 The agent should consider whether the transcription may be inaccurate or unnatural.
 
+### Longer transcript scan
+
+An `S:` entry may contain a long transcript. The agent should extract useful,
+natural expressions that the user is likely not comfortable producing.
+
+There is no fixed minimum or maximum extraction count. Selection should depend
+on expression quality, practical value, and estimated familiarity. The
+familiarity estimate should use the user's retained canonical notes and
+feedback from the current conversation as evidence. It remains a heuristic
+that can be adjusted after more usage.
+
 ---
 
 # 7. Daily Processing Skill
@@ -296,6 +322,11 @@ For each learning item, the skill should:
 7. generate one to three natural examples;
 8. prepare a concise proposed canonical note;
 9. wait for user confirmation before persistence.
+
+For `A:` items, the explanation should stay short because the user already
+understands the meaning. If the source context is too short, at least one
+example should be longer and contain enough realistic context to make the
+expression easier to understand and reuse.
 
 ---
 
@@ -432,9 +463,11 @@ The agent may proactively suggest improvements such as:
 * correcting an inaccurate meaning;
 * replacing an unnatural canonical form;
 * improving examples;
-* adding a valuable usage note;
-* identifying duplicate expressions;
-* merging closely duplicated learning items.
+* adding a valuable usage note.
+
+Repeated expressions are valid independent learning occurrences. They should
+not be treated as data errors or automatically merged, even when they occur in
+the same daily or revision page.
 
 The agent must not silently rewrite existing canonical notes.
 
@@ -492,7 +525,7 @@ The weekly review may:
 
 * review all expressions learned during the week;
 * identify related expressions;
-* identify duplicates or near-duplicates;
+* notice repeated expressions as a useful learning pattern;
 * compare similar expressions;
 * identify recurring themes or usage patterns;
 * identify expressions worth actively using;
@@ -847,7 +880,7 @@ These may be reconsidered after real-world usage.
 
 # 23. Required Skills
 
-Version 1 should provide three logical skills.
+The workflow should provide four logical skills.
 
 ## Skill 1: `process-english`
 
@@ -909,6 +942,23 @@ Primary outputs:
 content/english/revision/today.md
 content/english/revision/yesterday.md
 ```
+
+---
+
+## Skill 4: `start-english`
+
+Purpose:
+
+> Show a numbered entry menu so the user can start a common English workflow
+> by replying with one number.
+
+The menu should include:
+
+1. process the learning inbox;
+2. generate today's revision;
+3. start the current weekly review.
+
+Direct requests for any of the three workflows should continue to work.
 
 ---
 

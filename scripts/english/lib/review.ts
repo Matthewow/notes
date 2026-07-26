@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto"
 import { differenceInDays } from "./date"
-import { normalizeExpression } from "./ids"
 import type { EnglishLearningItem, LoadedEnglishConfig, ReviewSelection } from "./types"
 
 function supplementalHash(revisionDate: string, itemId: string): string {
@@ -11,12 +10,8 @@ export function selectReviewItems(
   items: EnglishLearningItem[],
   revisionDate: string,
   config: LoadedEnglishConfig,
-  yesterdayExpressions: Iterable<string> = [],
 ): ReviewSelection {
   const intervals = new Set(config.review.intervalsDays)
-  const yesterday = new Set(
-    Array.from(yesterdayExpressions, (expression) => normalizeExpression(expression)),
-  )
 
   const eligible = items
     .map((item) => ({ item, age: differenceInDays(revisionDate, item.capturedDate) }))
@@ -45,14 +40,11 @@ export function selectReviewItems(
     )
     .map(({ item }) => ({
       item,
-      appearedYesterday: yesterday.has(normalizeExpression(item.expression)),
       hash: supplementalHash(revisionDate, item.id),
     }))
     .toSorted(
       (left, right) =>
-        Number(left.appearedYesterday) - Number(right.appearedYesterday) ||
-        left.hash.localeCompare(right.hash) ||
-        left.item.id.localeCompare(right.item.id),
+        left.hash.localeCompare(right.hash) || left.item.id.localeCompare(right.item.id),
     )
 
   const needed = Math.max(0, config.review.targetMinItems - scheduled.length)

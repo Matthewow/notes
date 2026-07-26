@@ -1,11 +1,6 @@
 import assert from "node:assert/strict"
 import test, { describe } from "node:test"
-import {
-  isStructurallyValidItemId,
-  nextItemId,
-  normalizeExpression,
-  slugifyExpression,
-} from "../lib/ids"
+import { isStructurallyValidItemId, nextItemId, slugifyExpression } from "../lib/ids"
 
 describe("stable English item IDs", () => {
   test("normalizes punctuation, apostrophes, accents, and spaces", () => {
@@ -28,9 +23,5 @@ describe("stable English item IDs", () => {
   test("validates the stored structure", () => {
     assert.equal(isStructurallyValidItemId("2026-07-22-get-a-read-on-2"), true)
     assert.equal(isStructurallyValidItemId("get a read on"), false)
-  })
-
-  test("normalizes expression text for best-effort matching", () => {
-    assert.equal(normalizeExpression("  Get   a Read On  "), "get a read on")
   })
 })
