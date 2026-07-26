@@ -677,6 +677,7 @@ export async function loadQuartzLayout(layoutOverrides?: {
   // Add Head (built-in) and Footer (plugin)
   const HeadModule = await import("../../components/Head")
   const head = HeadModule.default()
+  const emptyFooter: QuartzComponent = () => null
 
   // Find footer from component registry (loaded during plugin instantiation)
   const footerEntry = json.plugins.find(
@@ -704,16 +705,14 @@ export async function loadQuartzLayout(layoutOverrides?: {
   // Apply structural defaults
   defaultLayout.head = head
   defaultLayout.header = defaultLayout.header ?? []
-  if (footer) {
-    defaultLayout.footer = footer
-  }
+  defaultLayout.footer = footer ?? emptyFooter
 
   // Ensure all byPageType entries inherit structural slots
   for (const pageType of Object.keys(byPageType)) {
     const pt = byPageType[pageType]
     if (!pt.head) pt.head = head
     if (!pt.header) pt.header = []
-    if (footer && !pt.footer) pt.footer = footer
+    if (!pt.footer) pt.footer = footer ?? emptyFooter
   }
 
   const mergedDefaults = { ...defaultLayout, ...layoutOverrides?.defaults }
